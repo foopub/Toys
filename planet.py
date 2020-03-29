@@ -2,6 +2,7 @@
 A rotating planet with simple weather.
 """
 import numpy as np
+from scipy import ndimage
 
 class Ring():
     """
@@ -13,20 +14,27 @@ class Ring():
 
     """
     def __init__(self, width, girth):
-        self.surface = np.zeros((width, girth, 3)) #temp, pressure, velocity
+        """
+        Parameters at each point on the surface:
+        temp, pressure, vel_x, vel_y, 
+
+        """
+        self.surface = np.zeros((width, girth, 3))
         self.findheatin(width, girth)
 
-    def rotate(self, days):
+    def rotate(self, days=1):
         for i in range(int(days*self.surface.shape[1])):
             self.heatin = np.roll(self.heatin,-1,1)
-            self.surface[:,:,0] += self.heatin
-            self.blackbodyloss()
+            self.heatchange()
 
     def orbit(self):
         pass
     
-    def blackbodyloss(self):
-        self.surface[:,:,0] -= self.surface[:,:,0]**4/50000
+    def heatchange(self, a=1,b=1/50000,c=3):
+        f = self.surface[:,:,0]
+        f += self.heatin*a                  #rad in 
+        f -= f**4*b                         #rad out
+        f += ndimage.laplace(f)/4           #conductance
 
     def findheatin(self, width, girth, rad_in=1, r=1, thickness=0.2, a_d_in=1):
         """
