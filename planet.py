@@ -6,7 +6,7 @@ from scipy import ndimage
 
 class Ring():
     """
-    Parameters needed:
+    Parameters possibly needed: 
     r: radius
     a_t: atmosphere thickness
     a_d_in: dissipaion of incoming radiation
