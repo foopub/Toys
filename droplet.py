@@ -21,7 +21,7 @@ def calc_area(y: np.array) -> float:
     d = 2*np.pi*(y[:-2]+dy/2)
     return np.sum(s*d)
 
-def calc_vol(y: np.array) -> np.array:
+def calc_vol(y: np.array) -> float:
     """
     Calculate volume of revolution.
 
