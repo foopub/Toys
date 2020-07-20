@@ -39,7 +39,8 @@ int derivative (double vectors[slots][size], int n) {
 	int mid = (n-1)/2;
 
 	for (int p=0; p<size; p++) {		//the point number
-	/*for the end points an asymmetric derivative is needed*/
+	/* for the end points an asymmetric derivative is needed...
+	 * doesn't work for even n yet :( */
 		if (p<mid) {			//forward
 			start = 0-p;
 			end = n-p;
@@ -47,8 +48,8 @@ int derivative (double vectors[slots][size], int n) {
 			start = size-n-p;
 			end = size-p;
 		} else { 		//regular
-			start = -2;
-			end = 3;
+			start = -mid;
+			end = mid+1;
 		}
 
 		vectors[2][p] = 0;		//clear old values
