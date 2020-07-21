@@ -1,5 +1,7 @@
 """
-A rotating planet with simple weather.
+Work in progress. 
+A rotating planet with simple weather. Using this to learn simulation
+techniques and nonlinear dynamics, etc. 
 """
 import numpy as np
 from scipy import ndimage
