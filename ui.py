@@ -1,3 +1,7 @@
+"""
+Chat UI project for learning the curses library.
+"""
+
 from _curses import window
 import curses
 from curses.textpad import Textbox
