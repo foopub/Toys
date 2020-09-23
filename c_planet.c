@@ -6,13 +6,12 @@
  * */
 
 enum {size=5,slots=3};		//More slots can be added 
+//typedef struct { 	//Use an explicit vector type vs n-array?
+//	int x; 		//This might be more efficient, but it also
+//	int y;		//might just compile to the same binary?
+//} vector_t;	
 
-typedef struct { 	//Use an explicit vector type vs n-array?
-	int x; 		//This might be more efficient, but it also
-	int y;		//might just compile to the same binary?
-} vector_t;	
-
-int derivative (double vectors[slots][size], int n) {
+void derivative (double vectors[slots][size], int n) {
 /* n-point derivative for arbitrarily spaced points. Generally:
  *
  * First find the n-degree polynomial using Lagrange interpolation,
@@ -28,9 +27,10 @@ int derivative (double vectors[slots][size], int n) {
  * where the extra k term ALWAYS CANCELS one of the j terms; if x = x_k,
  * there's no problem. This gives a total of n*(n-1) additive terms for 
  * the n point derivative. */
-	if (n>size) {
+
+	if (n>size) {		//Check if there's enough points 
 		printf("n exceeds the number of points!");
-		return 1;
+		return;
 	}
 
 	double *x = &vectors[0][0];
@@ -39,7 +39,8 @@ int derivative (double vectors[slots][size], int n) {
 	int mid = (n-1)/2;
 
 	for (int p=0; p<size; p++) {		//the point number
-	/* for the end points an asymmetric derivative is needed...
+	/* First determine the relative start and end points.
+	 * For the end points an asymmetric derivative is needed...
 	 * doesn't work for even n yet :( */
 		if (p<mid) {			//forward
 			start = 0-p;
@@ -47,13 +48,11 @@ int derivative (double vectors[slots][size], int n) {
 		} else if (size-p-1<mid) {	//backward
 			start = size-n-p;
 			end = size-p;
-		} else { 		//regular
+		} else { 			//regular
 			start = -mid;
 			end = mid+1;
 		}
-
-		vectors[2][p] = 0;		//clear old values
-		deriv = 0;
+		vectors[2][p] = 0, deriv = 0;	//clear old values
 //printf("\n");
 		for (int i=start; i<end; i++) { 	
 //printf("P %d, i %d,\t", p, i);
@@ -78,28 +77,20 @@ int derivative (double vectors[slots][size], int n) {
 		}
 		vectors[2][p] = deriv;
 	}
-	return 0;
+	return;
 }
 
-static double vectors[slots][size] = {
-/* Randomly generated points with the function sin(x) + x/2 + 5*sin(x/4) 
- * with a fairly poor resolution, used for testing. idk how to parse csv yet*/
-10.632964730561293,
-11.280362783039358,
-12.955465104192596,
-13.414699103423047,
-14.461823355140652,
-6.7052545781813055,
-6.260419878439484,
-6.371481837109032,
-6.405046606509657,
-5.897036104355255, 0, 0, 0, 0, 0
-};
+void readCSV () {
+
+}
 
 int main () {
+	double vectors[slots][size];
+	readCSV(vectors);
 	derivative(vectors, 5);
 	for (int i=0; i<size; i++) {
-		printf("Deriv at point %d is %f\n", i, vectors[2][i]);
+		printf("%f ", vectors[2][i]);
+		printf("\n");
 	}
 	return 0;
 }
