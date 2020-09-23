@@ -83,13 +83,17 @@ class Tube():
 
 class Sheet():
     def __init__(self, dimensions: tuple, conductivity: float=1,
-            viscosity: float=2, density: float=1.2, pressure: float=200.1):
+            viscosity: float=2, density: float=1.2, pressure: float=200.1,
+            gravity: float=9.81):
         """
         First generalisation attempt. 
         """
         self.c = conductivity
         self.m = viscosity
+        self.g = gravity
         
+        self.dye = np.zeros(dimensions)
+        self.dye_total = 0
 
         self.T = np.full(dimensions, 273.15)      #initial temperature
         self.d = np.full(dimensions, density)     #densities
@@ -119,7 +123,7 @@ class Sheet():
         """
         du_dt = -np.array(np.gradient(self.P))/self.d
     #dimensino specific du_dt[-2]
-        du_dt[0] -= 9.81   #gravity only in the y direction
+        du_dt[0] -= self.g   #gravity only in the y direction
         du_dt += self.m*np.stack(
                 [ndimage.laplace(self.u[i]) for i in [0,1]])
         du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))
@@ -159,20 +163,39 @@ class Sheet():
         #Conserve masss by spreading out fluctuations 
         self.d += (self.mass-np.sum(self.d))/self.vol
 
+    def spread_dye(self, dt=0.1):
+        dp = dt*-div(self.u*self.dye)
+        self.dye += dp
+        self.dye *= self.dye_total/np.sum(self.dye)
+    
+    def add_dye(self,x: int, y:int, spread: int, amount: float=1):
+        try:
+            self.dye[x-spread:x+spread,y-spread:y+spread] += amount
+            self.dye_total += spread**2*amount
+        except:
+            print("Something's wrong, check the values!")
+
     def step(self, dt: float=0.1):
         self.velocitychange(dt)
         self.edge_velocity()
         self.densitychange(dt)
+        self.spread_dye(dt)
         self.edge_pressure()
 
-    def show(self, which: str="d"):
+    def show(self, which: str="dye", arrows: bool=False):
         fig, ax = plt.subplots()
         x = np.arange(self.dim[1])
         y = np.arange(self.dim[0])
-        if which == "p":
+        if which == "dye":
+            p = ax.pcolormesh(self.dye)
+        elif which == "b":
+            p = ax.pcolormesh(self.dye)
+            p = ax.pcolormesh(self.P)
+        elif which == "p":
             p = ax.pcolormesh(self.P)
         else:
             p = ax.pcolormesh(self.d)
-        q = ax.quiver(x+0.5,y+0.5,self.u[1]*self.d,self.u[0]*self.d)
+        if arrows:
+            q = ax.quiver(x+0.5,y+0.5,self.u[1]*self.d,self.u[0]*self.d)
 
 #asdfad
