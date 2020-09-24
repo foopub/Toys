@@ -5,6 +5,7 @@ techniques and nonlinear dynamics, etc.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from scipy import ndimage
 
 def curl(array: np.array) -> np.array:
@@ -106,6 +107,11 @@ class Sheet():
         self.dim = dimensions
         self.vol = np.prod(dimensions)
 
+        self.fig, self.ax = plt.subplots()
+        self.x = np.arange(self.dim[1])
+        self.y = np.arange(self.dim[0])
+
+
     def heatchange(self, rate_a, rate_b):
         #add some heat in
         self.T[0,:] += rate_a
@@ -183,19 +189,31 @@ class Sheet():
         self.edge_pressure()
 
     def show(self, which: str="dye", arrows: bool=False):
-        fig, ax = plt.subplots()
-        x = np.arange(self.dim[1])
-        y = np.arange(self.dim[0])
         if which == "dye":
-            p = ax.pcolormesh(self.dye)
+            p = self.ax.pcolormesh(self.dye)
         elif which == "b":
-            p = ax.pcolormesh(self.dye)
-            p = ax.pcolormesh(self.P)
+            p = self.ax.pcolormesh(self.dye)
+            p = self.ax.pcolormesh(self.P)
         elif which == "p":
-            p = ax.pcolormesh(self.P)
+            p = self.ax.pcolormesh(self.P)
         else:
-            p = ax.pcolormesh(self.d)
+            p = self.ax.pcolormesh(self.d)
         if arrows:
-            q = ax.quiver(x+0.5,y+0.5,self.u[1]*self.d,self.u[0]*self.d)
+            q = self.ax.quiver(self.x+0.5,self.y+0.5,
+                    self.u[1]*self.d,self.u[0]*self.d)
 
-#asdfad
+    def animation(self, step: int, dt: float=0.01):
+        self.step(dt)
+        plt.cla()
+        self.ax.pcolormesh(self.d)
+        self.ax.quiver(self.x+0.5,self.y+0.5,
+            self.u[1]*self.d,self.u[0]*self.d)
+
+if __name__ == "__main__":
+    a = Sheet((100,100),gravity=0)
+    for i in range(11):
+        for j in range(5):
+            a.u[0,i+j,i+40] += j*2
+            a.u[1,i-j,j+40] += i*2
+    ani = FuncAnimation(a.fig, a.animation, frames=20, interval=30)
+    plt.show()
