@@ -203,7 +203,8 @@ class Sheet():
                     self.u[1]*self.d,self.u[0]*self.d)
 
     def animation(self, step: int, dt: float=0.01):
-        self.step(dt)
+        for _ in range(10):
+            self.step(dt)
         plt.cla()
         self.ax.pcolormesh(self.d)
         self.ax.quiver(self.x+0.5,self.y+0.5,
@@ -214,6 +215,9 @@ if __name__ == "__main__":
     for i in range(11):
         for j in range(5):
             a.u[0,i+j,i+40] += j*2
-            a.u[1,i-j,j+40] += i*2
-    ani = FuncAnimation(a.fig, a.animation, frames=20, interval=30)
-    plt.show()
+            a.u[1,i-j+10,j+40] += i*2
+    for _ in range(100):
+        a.step(0.01)
+    ani = FuncAnimation(a.fig, a.animation, frames=400,
+            interval=30, repeat=False)
+    ani.save("plop3.mp4")
