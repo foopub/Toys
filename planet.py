@@ -112,13 +112,13 @@ class Sheet():
         self.y = np.arange(self.dim[0])
 
 
-    def heatchange(self, rate_a, rate_b):
+    def heatchange(self, rate_a: float, rate_b: float):
         #add some heat in
         self.T[0,:] += rate_a
         #radiate some heat out
-        self.T[-1,:] -= self.T[-1]**4*rate_b #???
+        self.T -= self.T[-1]**4*rate_b #???
         #distribute temp
-        self.T -= self.c*ndimage.laplace(self.T)/4
+        self.T += ndimage.laplace(self.T)/4
 
     def velocitychange(self, dt=0.1):
         """
@@ -134,8 +134,9 @@ class Sheet():
                 [ndimage.laplace(self.u[i]) for i in [0,1]])
         du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))
     #dimension specific axis=()
-        du_dt -= np.add.reduce(self.u*np.array(
-            np.gradient(self.u[0:],axis=(1,2))), axis=1)
+        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        du_dt -= np.add.reduce(np.stack((self.u,)*2,axis=1)*np.array(
+            np.gradient(self.u,axis=(1,2))))
         self.u += du_dt*dt
 
     def edge_velocity(self):
@@ -212,12 +213,10 @@ class Sheet():
 
 if __name__ == "__main__":
     a = Sheet((100,100),gravity=0)
-    for i in range(11):
-        for j in range(5):
-            a.u[0,i+j,i+40] += j*2
-            a.u[1,i-j+10,j+40] += i*2
-    for _ in range(100):
-        a.step(0.01)
-    ani = FuncAnimation(a.fig, a.animation, frames=400,
+    for i in range(10):
+        a.u[0,i+45,abs(5-i)] += 20
+    #for _ in range(100):
+    #    a.step(0.01)
+    ani = FuncAnimation(a.fig, a.animation, frames=800,
             interval=30, repeat=False)
-    ani.save("plop3.mp4")
+    ani.save("plop4.mp4")
