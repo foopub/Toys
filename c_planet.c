@@ -20,7 +20,7 @@ void derivative (double vectors[slots][size], int n) {
  *
  * p(x)=S_i P_j {y_i * (x - x_j)/(x_i - x_j)}
  *
- * which can be differentiated with respect to x (k=0 to n, k!=i):
+ * which can be differentiated with respect to x (k=0 to n, k!=j):
  *
  * p'(x)= S_i P_j S_k {y_i * ((x - x_j) / (x_i - x_j)) / (x - x_k))}
  * 

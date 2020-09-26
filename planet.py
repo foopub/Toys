@@ -127,52 +127,80 @@ class Sheet():
         p Du/Dt = -del(P) + pg + m lap(u) + 1/3 m del(div(u))
         
         """
+    ###FORGOT THE DENSITY TERMS HERE BEFORE AAAAAAAAAAAAAAAAAA
+
+    #Pressure gradient 
         du_dt = -np.array(np.gradient(self.P))/self.d
-    #dimensino specific du_dt[-2]
-        du_dt[0] -= self.g   #gravity only in the y direction
-        du_dt += self.m*np.stack(
+    #Gravity, only in the y direction
+        du_dt[0] -= self.g
+    #Diffusion term, this doesn't work great
+        du_dt += self.m/self.d*np.stack(
                 [ndimage.laplace(self.u[i]) for i in [0,1]])
-        du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))
-    #dimension specific axis=()
-        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    #Compressible term 
+        du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))/self.d
+    #Advection - this one is pretty tricky, probably doesn't work
         du_dt -= np.add.reduce(np.stack((self.u,)*2,axis=1)*np.array(
             np.gradient(self.u,axis=(1,2))))
         self.u += du_dt*dt
 
     def edge_velocity(self):
-    #dimension specific
-        #reflext x values at x edges
+        """
+        This takes care of the boundries, by reflecting the
+        relevant quantities.
+        """
+    #reflext x values at x edges
         self.u[1,:,0] = -self.u[1,:,1]
         self.u[1,:,-1] = -self.u[1,:,-2]
-        #mirror x values at y edges 
+    #mirror x values at y edges 
         self.u[1,0,:] = self.u[1,1,:]
         self.u[1,-1,:] = self.u[1,-2,:]
-        #mirror y values at x edges
+    #mirror y values at x edges
         self.u[0,:,0] = self.u[0,:,1]
         self.u[0,:,-1] = self.u[0,:,-2]
-        #mirror y values at y edges 
+    #mirror y values at y edges 
         self.u[0,0,:] = -self.u[0,1,:]
         self.u[0,-1,:] = -self.u[0,-2,:]
 
     def edge_pressure(self):
+        """
+        Analogous to edge_velocity but for pressure
+        """
         self.P[:,0] = self.P[:,1]
         self.P[:,-1] = self.P[:,-2]
         self.P[0,:] = self.P[1,:]
         self.P[-1,:] = self.P[-2,:]
 
     def densitychange(self,dt=0.1):
-        #Using conservation of mass
-        dp = dt*-div(self.u)
-        dp[[0,-1]] = dp[:,[0,-1]] = 0
-        #Change pressure accordingly to ideal gas law
-        self.P *= 1+dp/self.d
-        self.d += dp
-        #Conserve masss by spreading out fluctuations 
-        self.d += (self.mass-np.sum(self.d))/self.vol
+        """
+        This tends to cause oscilations and explode sometimes.
+        """
+    #Using conservation of mass and diffusion
+        dp_dt = -div(self.u)
+        dp_dt += ndimage.laplace(self.d)/4
+    #This term seems to make the density clump together, producing 
+    #waves which can make the simulation blow up.
+        #dp_dt -= np.add.reduce(self.u*np.array(np.gradient(self.d)))
+    #Edge density shouldn't change.
+        dp_dt[[0,-1]] = dp_dt[:,[0,-1]] = 0
+        self.d += dp_dt*dt
+    #Change pressure accordingly to ideal gas law
+    #AAAAAAAAAAAAAAAA this fixed most of the poblems from before!!!
+        self.P = self.d*8.214*273
+    #Conserve mass by spreading out fluctuations 
+        self.d[1:-1,1:-1] += (self.mass-np.sum(self.d))/self.vol
 
     def spread_dye(self, dt=0.1):
-        dp = dt*-div(self.u*self.dye)
-        self.dye += dp
+        """
+        This is quite tricky
+        """
+        #advection operator
+        du_dt = -20*div(self.u*self.dye)
+        du_dt = -20*np.add.reduce(self.u*np.array(np.gradient(self.dye)))
+        #diffusion 
+        #du_dt += ndimage.laplace(self.d)/4
+        self.dye += du_dt*dt
+    #Prevent negative density
+        self.dye = np.maximum(self.dye,0)
         self.dye *= self.dye_total/np.sum(self.dye)
     
     def add_dye(self,x: int, y:int, spread: int, amount: float=1):
@@ -186,15 +214,12 @@ class Sheet():
         self.velocitychange(dt)
         self.edge_velocity()
         self.densitychange(dt)
-        self.spread_dye(dt)
+        #self.spread_dye(dt)
         self.edge_pressure()
 
     def show(self, which: str="dye", arrows: bool=False):
         if which == "dye":
             p = self.ax.pcolormesh(self.dye)
-        elif which == "b":
-            p = self.ax.pcolormesh(self.dye)
-            p = self.ax.pcolormesh(self.P)
         elif which == "p":
             p = self.ax.pcolormesh(self.P)
         else:
