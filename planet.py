@@ -206,9 +206,9 @@ class Sheet():
         self.dye = np.maximum(self.dye,0)
         self.dye *= self.dye_total/np.sum(self.dye)
     
-    def add_dye(self,x: int, y:int, spread: int, amount: float=1):
+    def add_dye(self,y: int, x:int, spread: int, amount: float=1):
         try:
-            self.dye[x-spread:x+spread,y-spread:y+spread] += amount
+            self.dye[y-spread:y+spread,x-spread:x+spread] += amount
             self.dye_total += spread**2*amount
         except:
             print("Something's wrong, check the values!")
