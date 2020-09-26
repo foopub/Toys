@@ -128,16 +128,18 @@ class Sheet():
         
         """
     ###FORGOT THE DENSITY TERMS HERE BEFORE AAAAAAAAAAAAAAAAAA
-
+        """STICKING THIS HERE FOR NOW, THIS SHOULD BE MODULARISED TO
+    MATCH DIFFERENT DYE BEHAVIOUS"""
+        total = self.d+self.dye
     #Pressure gradient 
-        du_dt = -np.array(np.gradient(self.P))/self.d
+        du_dt = -np.array(np.gradient(self.P))/total
     #Gravity, only in the y direction
         du_dt[0] -= self.g
     #Diffusion term, this doesn't work great
-        du_dt += self.m/self.d*np.stack(
-                [ndimage.laplace(self.u[i]) for i in [0,1]])
+        du_dt += self.m*np.stack([ndimage.laplace(self.u[i])
+            for i in [0,1]])/total
     #Compressible term 
-        du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))/self.d
+        du_dt += 1/3*self.m*np.array(np.gradient(div(self.u)))/total
     #Advection - this one is pretty tricky, probably doesn't work
         du_dt -= np.add.reduce(np.stack((self.u,)*2,axis=1)*np.array(
             np.gradient(self.u,axis=(1,2))))
@@ -176,7 +178,7 @@ class Sheet():
         """
     #Using conservation of mass and diffusion
         dp_dt = -div(self.u)
-        dp_dt += ndimage.laplace(self.d)/4
+        dp_dt += ndimage.laplace(self.d)
     #This term seems to make the density clump together, producing 
     #waves which can make the simulation blow up.
         #dp_dt -= np.add.reduce(self.u*np.array(np.gradient(self.d)))
@@ -194,6 +196,7 @@ class Sheet():
         This is quite tricky
         """
         #advection operator
+    #This moves quite well now
         du_dt = -20*div(self.u*self.dye)
         du_dt = -20*np.add.reduce(self.u*np.array(np.gradient(self.dye)))
         #diffusion 
@@ -210,11 +213,12 @@ class Sheet():
         except:
             print("Something's wrong, check the values!")
 
-    def step(self, dt: float=0.1):
+    def step(self, dt: float=0.1, dye: bool=False):
         self.velocitychange(dt)
         self.edge_velocity()
         self.densitychange(dt)
-        #self.spread_dye(dt)
+        if dye:
+            self.spread_dye(dt)
         self.edge_pressure()
 
     def show(self, which: str="dye", arrows: bool=False):
@@ -230,11 +234,11 @@ class Sheet():
 
     def animation(self, step: int, dt: float=0.01):
         for _ in range(10):
-            self.step(dt)
+            self.step(dt, dye=True)
         plt.cla()
-        self.ax.pcolormesh(self.d)
-        self.ax.quiver(self.x+0.5,self.y+0.5,
-            self.u[1]*self.d,self.u[0]*self.d)
+        self.ax.pcolormesh(self.dye)
+        #self.ax.quiver(self.x+0.5,self.y+0.5,
+        #    self.u[1]*self.d,self.u[0]*self.d)
 
 if __name__ == "__main__":
     a = Sheet((100,100),gravity=0)
