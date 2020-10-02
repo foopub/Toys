@@ -200,7 +200,7 @@ class Sheet():
         du_dt = -20*div(self.u*self.dye)
         du_dt = -20*np.add.reduce(self.u*np.array(np.gradient(self.dye)))
         #diffusion 
-        #du_dt += ndimage.laplace(self.d)/4
+        du_dt += ndimage.laplace(self.dye)/4
         self.dye += du_dt*dt
     #Prevent negative density
         self.dye = np.maximum(self.dye,0)
@@ -209,7 +209,7 @@ class Sheet():
     def add_dye(self,y: int, x:int, spread: int, amount: float=1):
         try:
             self.dye[y-spread:y+spread,x-spread:x+spread] += amount
-            self.dye_total += spread**2*amount
+            self.dye_total += (spread*2)**2*amount
         except:
             print("Something's wrong, check the values!")
 
@@ -217,8 +217,7 @@ class Sheet():
         self.velocitychange(dt)
         self.edge_velocity()
         self.densitychange(dt)
-        if dye:
-            self.spread_dye(dt)
+        self.spread_dye(dt)
         self.edge_pressure()
 
     def show(self, which: str="dye", arrows: bool=False):
