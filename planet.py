@@ -202,7 +202,7 @@ class Sheet():
         du_dt += ndimage.laplace(self.dye)/100
         self.dye += du_dt*dt
     #Prevent negative density
-        self.dye = np.maximum(self.dye,0)
+        #self.dye = np.maximum(self.dye,0)
         self.dye *= self.dye_total/np.sum(self.dye)
     
     def add_dye(self,y: int, x:int, spread: int, amount: float=1):
@@ -212,7 +212,7 @@ class Sheet():
         except:
             print("Something's wrong, check the values!")
 
-    def step(self, dt: float=0.1, dye: bool=False):
+    def step(self, dt: float=0.1):
         self.velocitychange(dt)
         self.edge_velocity()
         self.densitychange(dt)
@@ -233,7 +233,7 @@ class Sheet():
 
     def animation(self, step: int, dt: float=0.01):
         for _ in range(10):
-            self.step(dt, dye=True)
+            self.step(dt)
         plt.cla()
         self.ax.pcolormesh(self.dye)
         #self.ax.quiver(self.x+0.5,self.y+0.5,
